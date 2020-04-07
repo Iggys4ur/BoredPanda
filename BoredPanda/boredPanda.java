@@ -6,16 +6,16 @@ import java.util.concurrent.ScheduledExecutorService;
 public class boredPanda {
 
     private final pandaJournal journal;
-    private final String pandaName;
+    protected final timeClock clock;
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
     protected Action currentAction, previousAction;
 
     public boredPanda(String name) {
-        pandaName = name;
         previousAction = new Action().setFields("INITIALIZATION ACTIVITY", null, 1000);
         currentAction = new Action();
-        journal = new pandaJournal(this, scheduler);
+        clock = new timeClock(this);
+        journal = new pandaJournal(this, name);
     }
 
     protected void nextAction() {
@@ -24,7 +24,7 @@ public class boredPanda {
     }
 
     public void doPandaStuffForAPeriod(){
-        doPandaStuffForDays(journal.SHIFTS_PER_PERIOD);
+        doPandaStuffForDays(clock.SHIFTS_PER_PERIOD);
     }
 
     private void doPandaStuffForDays(int days) {
@@ -32,7 +32,6 @@ public class boredPanda {
         for (int i = 0; i < days; i++) {
 
             doPandaStuffForADay();
-            if(journal.endOfPeriod()) journal.submitClock();
         }
         journal.compute();
         journal.print();
@@ -40,18 +39,18 @@ public class boredPanda {
 
     protected void doPandaStuffForADay() {
 
-        if (!journal.endOfDay()) {
+        if (!clock.endOfDay()) {
 
-            journal.punchClock(false);
+            clock.punchClock(false);
             doPandaStuffForADay();
         }
         else {
-            journal.punchClock(true);
+            clock.punchClock(true);
         }
     }
 
     public String getPandaName() {
-        return pandaName;
+        return journal.NAME;
     }
 
     public pandaJournal getJournal() {

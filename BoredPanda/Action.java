@@ -32,7 +32,7 @@ class Action implements Runnable{
 
     public void applyChoice(Integer c){ //todo turn activity type into enum for scaling activity list
 
-        choice = (isNull(c) || c < 0 || 10 < c) ? R.nextInt(10) : c;
+        choice = (isNull(c) || c < 0 || 10 < c) ? R.nextInt(11) : c;
         List<String> tasks = new ArrayList<String>();
 
         switch (choice) {

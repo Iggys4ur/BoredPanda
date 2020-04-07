@@ -3,98 +3,55 @@ package BoredPanda;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 public class pandaJournal {
 
-    private final long startTime = System.currentTimeMillis();
     private final boredPanda PANDA;
-    private final ScheduledExecutorService SCHEDULER;
+    protected final String NAME;
 
-    //All the stats
-    private final float BREED = new Random().nextInt(4) + 1;             // five breeds, unaffected by quality
-    private final short QUALITY = (short) (new Random().nextInt(9) + 1 + BREED/2);         // ten qualities, affected by breed
-    private final float FERTILITY = new Random().nextFloat()*(QUALITY/5);
-    private final float LUCK = (float) (new Random().nextFloat()*((double)(QUALITY)/5));
-    private short Size = (short) ((new Random().nextFloat()*3*100)/100);
-    private float Physique = new Random().nextInt(5 + (QUALITY/2)) + 1;
-    private float Agility = new Random().nextInt(5 + (QUALITY/2)) + 1;
-    private float Charisma = new Random().nextInt(5 + (QUALITY/2)) + 1;
-    private float Magic = new Random().nextInt(5 + (QUALITY/2)) + 1;
-    private float Intellect = new Random().nextInt(5 + (QUALITY/2)) + 1 ;
+    //Immutable Attributes
+    private final byte BREED = (byte) (new Random().nextInt(4)+1),
+                    QUALITY = (byte) (new Random().nextInt(6 - (5/(BREED))) + BREED),
+                    SIZE = (byte) ((new Random().nextInt((6 - (5/(BREED)) + BREED))/2) +1),
+                    FERTILITY = (byte) (new Random().nextInt(11 - (10/(QUALITY))) + BREED),
+                    LUCK = (byte) (new Random().nextInt( 11 - (10/QUALITY)));
 
-    private Action[] journal = new Action[10];
+    //stats
+    private byte Physique = (byte) (new Random().nextInt(5 + (QUALITY/2)) + 1),
+                Agility = (byte) (new Random().nextInt(5 + (QUALITY/2)) + 1),
+                Intellect = (byte) (new Random().nextInt(5 + (QUALITY/2)) + 1),
+                Charisma = (byte) (new Random().nextInt(5 + (QUALITY/2)) + 1),
+                Magic = (byte) (new Random().nextInt(5 + (QUALITY/2)) + 1);
+
+    //actions
+    private Action[] journal = new Action[11];
     private List<Action> activityHistory = new ArrayList<>();
 
-    //all the clocks
-    protected final TimeUnit timeUnit = TimeUnit.MILLISECONDS; //set TimeUnit for panda
-    protected final long SHIFT_LENGTH = 480; //set length of a shift / day
-    protected final int SHIFTS_PER_PERIOD = 5; //set number of shifts/days per period/week
-    protected int day = 0;
-    protected int week = 0;
-    protected long age = 0;
-    protected long dayTimeClocked = 0;
-    protected long weekTimeClocked = 0;
-    protected long clockedOvertime = 0;  //only awarded overtime for working a full week
-
-    protected pandaJournal(boredPanda panda, ScheduledExecutorService s){
+    protected pandaJournal(boredPanda panda, String name){
         this.PANDA = panda;
-        this.SCHEDULER = s;
+        this.NAME = name;
         initLogs();
+        initStats();
     }
 
-    public void initLogs()
+    private void initLogs()
     {
         activityHistory.add(PANDA.previousAction);
         Action a = new Action();
         for (int i = 0; i < journal.length; i++) {
             journal[i] = new Action().choose(i).setDuration(0);
         }
-        print(); //DEBUG
-        System.out.println(" LOGS INITIALIZED ");
+        //print(); //DEBUG
+        //System.out.println(" LOGS INITIALIZED \n\n\n");
     }
 
-    public void punchClock(boolean endOfDay)
+    private void initStats()
     {
-        //System.out.println("PREVIOUS = " + PANDA.previousAction); //DEBUG
-        //System.out.println("CURRENT = " + PANDA.currentAction); //DEBUG
 
-        activityHistory.add(PANDA.currentAction);
-        SCHEDULER.schedule(PANDA.currentAction, PANDA.previousAction.getDuration(), timeUnit);
-
-        if (endOfDay) {
-            day++;
-            dayTimeClocked += PANDA.getCurrentAction().getDuration();
-            weekTimeClocked += dayTimeClocked; //only add full shifts to the week + age
-            dayTimeClocked = 0;
-        }
-        else {
-            dayTimeClocked += PANDA.getCurrentAction().getDuration();
-        }
-
-        PANDA.nextAction();
     }
 
-    public void submitClock(){
-        clockOvertime();
-        week++;
-        //TODO what else happens when the time clock is submitted?
-    }
 
-    public void clockOvertime()
-    {
-        this.clockedOvertime += weekTimeClocked - (SHIFT_LENGTH * SHIFTS_PER_PERIOD);
-    }
-
-    public void clearClocks()
-    {
-        this.dayTimeClocked = 0;
-        this.weekTimeClocked = 0;
-        this.clockedOvertime = 0;
-    }
-
-    public void compute()
+    protected void compute()
     {
         for (int i = 0; i < journal.length; i++) {
             for (Action a : activityHistory){
@@ -106,45 +63,67 @@ public class pandaJournal {
         }
     }
 
-    protected void print() {
+    protected void print(){
+        print(PANDA.clock.week);
+    }
 
-        /*if(debug){
-            System.out.println("*************************************");
-            System.out.println("----------------DEBUG----------------");
-            System.out.println("*************************************\n");
-            for (Action a: activityHistory) {
-                System.out.println(a.toString());
-            }
-            System.out.println("\n*************************************");
-            System.out.println("*************************************\n");
-            return;
-        }*/
+    protected void print(int week) {
+
+        long[] clock = PANDA.clock.history.get(week-1);
 
         System.out.println("------------ [ JOURNAL ] ------------");
-        System.out.println("NAME: " + PANDA.getPandaName() +" | AGE : " + age);
+        System.out.println("NAME: " + NAME +" | AGE : " + PANDA.clock.age());
         System.out.println("P: " + (int) Physique + " | A: " + (int) Agility + " | C: " + (int) Charisma + " | M: " + (int) Magic + " | I: " + (int) Intellect);
-        System.out.println("B:" + (int) BREED + " | Q: " + (int) QUALITY + " | S: " + (int) Size + " | F: " + FERTILITY + " | L: " + (int) LUCK);
+        System.out.println("B:" + (int) BREED + " | Q: " + (int) QUALITY + " | S: " + (int) SIZE + " | F: " + FERTILITY + " | L: " + (int) LUCK);
         System.out.println("------------------------------------");
-        System.out.println("WEEK " + week + " => [ HOURS: " + weekTimeClocked + " | OT: " + clockedOvertime + " ]" );
+        System.out.println("WEEK " + clock[0] + " => " + (clock[0] + 1) + " : [ HOURS: " + clock[1] + " | OT: " + clock[2] + " ]" );
         System.out.println("------------------------------------");
         for (Action a : journal){
             System.out.println("|"+ a.getChoice() + "| " + a.toString());
         }
         System.out.println("------------------------------------\n");
-        clearClocks();
     }
 
-    public boolean dayStarted() {return dayTimeClocked > 0;}
-
-    public boolean endOfDay(){
-        return !(dayTimeClocked < SHIFT_LENGTH);
+    public byte[] getStats(){
+        return new byte[]{BREED, QUALITY, SIZE, FERTILITY, LUCK, Physique, Agility, Intellect, Charisma, Magic};
     }
 
-    public boolean endOfPeriod() {return (day == SHIFTS_PER_PERIOD);} //TODO
-
-    public TimeUnit timeUnit(){
-        return timeUnit;
+    public void setPhysique(byte physique) {
+        Physique = physique;
     }
 
+    public void setAgility(byte agility) {
+        Agility = agility;
+    }
+
+    public void setIntellect(byte intellect) {
+        Intellect = intellect;
+    }
+
+    public void setCharisma(byte charisma) {
+        Charisma = charisma;
+    }
+
+    public void setMagic(byte magic) {
+        Magic = magic;
+    }
+
+    public Action[] getJournal() {
+        return journal;
+    }
+
+    public void updateJournal(Action[] arr) {
+        for (int i = 0; i < arr.length; i++) {
+            journal[i] = arr[i];
+        }
+    }
+
+    protected List<Action> getActivityHistory() {
+        return activityHistory;
+    }
+
+    protected void addToHistory(Action a){
+        activityHistory.add(a);
+    }
 
 }
