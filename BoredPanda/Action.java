@@ -1,8 +1,6 @@
 package BoredPanda;
 
 import java.util.*;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 class Action implements Runnable{
 
@@ -12,7 +10,7 @@ class Action implements Runnable{
     private List<String> taskList = new ArrayList<String>();
     private Random R = new Random();
 
-    public Action(){}
+    public Action(){choose(null);}
 
     @Override
     public void run(){
@@ -28,7 +26,7 @@ class Action implements Runnable{
     }
 
     public Action choose (Integer c) {
-        applyChoice(c);
+        this.applyChoice(c);
         return this;
     }
 
