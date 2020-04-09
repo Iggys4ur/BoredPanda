@@ -24,62 +24,48 @@ public class pandaJournal {
                 Magic = (byte) (new Random().nextInt(5 + (QUALITY/2)) + 1);
 
     //actions
-    private Action[] journal = new Action[11];
-    private List<Action> activityHistory = new ArrayList<>();
+    Action[] journal = new Action[11];
+    protected List<Action> activityHistory = new ArrayList<Action>();
 
-    protected pandaJournal(boredPanda panda, String name){
+    pandaJournal(boredPanda panda, String name){
         this.PANDA = panda;
         this.NAME = name;
         initLogs();
-        initStats();
     }
 
-    private void initLogs()
+    protected void initLogs()
     {
+        PANDA.previousAction = new Action(PANDA).setFields("INITIALIZATION ACTIVITY", null, 1000);
         activityHistory.add(PANDA.previousAction);
-        Action a = new Action();
         for (int i = 0; i < journal.length; i++) {
-            journal[i] = new Action().choose(i).setDuration(0);
+            journal[i] = new Action(PANDA, i).setDuration(0);
         }
+        PANDA.currentAction = PANDA.previousAction.choose(null);
         //print(); //DEBUG
         //System.out.println(" LOGS INITIALIZED \n\n\n");
     }
 
-    private void initStats()
-    {
-
-    }
-
-
     protected void compute()
     {
-        for (int i = 0; i < journal.length; i++) {
-            for (Action a : activityHistory){
-                if(a.getChoice() == i)
-                {
-                    journal[i].addDuration(a.getDuration());
-                }
-            }
+        for (Action a: activityHistory)
+        {
+            journal[a.choice].duration += a.duration;
         }
     }
 
-    protected void print(){
-        print(PANDA.clock.week);
-    }
+    protected void print() {
 
-    protected void print(int week) {
-
-        long[] clock = PANDA.clock.history.get(week-1);
+        timeClock clock = PANDA.clock;
 
         System.out.println("------------ [ JOURNAL ] ------------");
         System.out.println("NAME: " + NAME +" | AGE : " + PANDA.clock.age());
         System.out.println("P: " + (int) Physique + " | A: " + (int) Agility + " | C: " + (int) Charisma + " | M: " + (int) Magic + " | I: " + (int) Intellect);
         System.out.println("B:" + (int) BREED + " | Q: " + (int) QUALITY + " | S: " + (int) SIZE + " | F: " + FERTILITY + " | L: " + (int) LUCK);
         System.out.println("------------------------------------");
-        System.out.println("WEEK " + clock[0] + " => " + (clock[0] + 1) + " : [ HOURS: " + clock[1] + " | OT: " + clock[2] + " ]" );
+        System.out.println("TOTAL WEEKS " + clock.weeks + " [ TOTAL HOURS: " + (clock.totalClock) + " | TOTAL OT: " + (clock.totalOvertime) + " ]" );
         System.out.println("------------------------------------");
         for (Action a : journal){
-            System.out.println("|"+ a.getChoice() + "| " + a.toString());
+            System.out.println(a);
         }
         System.out.println("------------------------------------\n");
     }
@@ -112,18 +98,8 @@ public class pandaJournal {
         return journal;
     }
 
-    public void updateJournal(Action[] arr) {
-        for (int i = 0; i < arr.length; i++) {
-            journal[i] = arr[i];
-        }
-    }
-
     protected List<Action> getActivityHistory() {
         return activityHistory;
-    }
-
-    protected void addToHistory(Action a){
-        activityHistory.add(a);
     }
 
 }

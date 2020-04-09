@@ -1,6 +1,8 @@
 package BoredPanda;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -8,72 +10,127 @@ import java.util.concurrent.TimeUnit;
 
 public class timeClock {
 
-    private final long startTime = System.currentTimeMillis();
     private static boredPanda PANDA;
     private static ScheduledExecutorService SCHEDULER = Executors.newScheduledThreadPool(1);
+    private SimpleDateFormat formatter = new SimpleDateFormat();
 
     //all the clocks
-    protected final TimeUnit timeUnit = TimeUnit.MILLISECONDS; //set TimeUnit for panda
+    private final long startTime = System.currentTimeMillis();
+    protected final TimeUnit timeUnit = TimeUnit.MINUTES; //set TimeUnit for panda
     protected final long SHIFT_LENGTH = 480; //set length of a shift / day
     protected final int SHIFTS_PER_PERIOD = 5; //set number of shifts/days per period/week
-    protected int day = 0;
-    protected int week = 0;
-    protected long dayTimeClocked;
-    protected long weekTimeClocked;
-    protected long clockedOvertime;  //only awarded overtime for working a full week
+    protected boolean endOfDay = false,
+                        endOfWeek = false;
 
-    protected List<long[]> history = new ArrayList<>();
+    protected int days = 0;
+    protected int weeks = 0;
+    protected long dayClock,
+                    weekClock,
+                    weekOvertime,
+                    totalClock,
+                    totalOvertime;
+
+    protected List<long[]> history = new ArrayList<long[]>(1);
 
     public timeClock(boredPanda panda){
         clearClocks();
         PANDA = panda;
     }
     
-    protected void punchClock(boolean endOfDay)
+    protected void punch()
     {
-        //System.out.println("PREVIOUS = " + PANDA.previousAction); //DEBUG
-        //System.out.println("CURRENT = " + PANDA.currentAction); //DEBUG
-        PANDA.getJournal().addToHistory(PANDA.currentAction);
-        SCHEDULER.schedule(PANDA.currentAction, PANDA.previousAction.getDuration(), timeUnit);
+        SCHEDULER.schedule(PANDA.currentAction, PANDA.previousAction.duration, timeUnit);
+        addHours();
 
-        if (endOfDay) {
-            day++;
-            dayTimeClocked += PANDA.getCurrentAction().getDuration();
-            weekTimeClocked += dayTimeClocked;
-            dayTimeClocked = 0;
-            if (endOfPeriod())
-            {
-                submitClock();
-                clearClocks();
-            }
-        }
-        else {
-            dayTimeClocked += PANDA.getCurrentAction().getDuration();
+        if (endOfDay)
+        {
+            endDay();
+            if (endOfWeek){submitClock();}
         }
 
         PANDA.nextAction();
     }
 
+    protected void updateHistory(long[] newWeek)
+    {
+        List<long[]> list = new ArrayList<long[]>(weeks++);
+        if(history != null) list.addAll(history);
+        list.add(newWeek);
+        history = list;
+    }
+
+    protected void endDay(){
+        weekClock += dayClock;
+        dayClock = 0;
+        days++;
+        endOfWeek = days == SHIFTS_PER_PERIOD;
+    }
+
     protected void submitClock(){
-        clockOvertime();
-        history.add(new long[]{week++, weekTimeClocked, clockedOvertime});
+        weekOvertime += (weekClock - (SHIFT_LENGTH * SHIFTS_PER_PERIOD));
+        updateHistory(new long[]{weekClock, weekOvertime});
+        totalClock += weekClock;
+        totalOvertime += weekOvertime;
+        clearClocks();
 
         //TODO what else happens when the time clock is submitted for the end of the period?
     }
 
-    protected void clockOvertime() { this.clockedOvertime += weekTimeClocked - (SHIFT_LENGTH * SHIFTS_PER_PERIOD); }
+    protected void addHours(){
+        dayClock += PANDA.currentAction.duration;
+        endOfDay = dayClock >= SHIFT_LENGTH;
+    }
+
+    protected void print(){
+        printHistory(weeks);
+    }
+
+    protected void printHistory(int week) {
+
+        System.out.println("------------------------------------");
+        System.out.println("WEEK " + (week - 1) + " => " + week + " : [ HOURS: " + (history.get(week-1)[0]) + " | OT: " + (history.get(week-1)[1]) + " ]" );
+        System.out.println("------------------------------------");
+        for (Action a : PANDA.getJournal().getJournal()){
+            System.out.println(a);
+        }
+        System.out.println("------------------------------------\n");
+    }
 
     protected void clearClocks()
     {
-        this.dayTimeClocked = 0;
-        this.weekTimeClocked = 0;
-        this.clockedOvertime = 0;
+        this.days = 0;
+        this.dayClock = 0;
+        this.weekClock = 0;
+        this.weekOvertime = 0;
     }
 
     protected int age(){ return (int) (System.currentTimeMillis() - startTime ); }
 
-    protected boolean endOfDay(){ return !(dayTimeClocked < SHIFT_LENGTH); }
+    protected String formatHours (long input){
+        return formatWithPattern(input, "hh:mm");
+    }
 
-    protected boolean endOfPeriod() { return (day == SHIFTS_PER_PERIOD); }
+    protected String formatDays (long input){
+        return formatWithPattern(input, "dd:hh:mm");
+    }
+
+    protected String formatWeeks (long input){
+        return formatWithPattern(input, "ww:dd:hh:mm");
+    }
+
+    protected String formatMonth (long input){
+        return formatWithPattern(input, "MM:ww:dd:hh:mm");
+    }
+
+    protected String formatYear (long input){
+        return formatWithPattern(input, "yy:MM:ww:dd:hh:mm");
+    }
+
+    protected String formatWithPattern (long input, String pattern){
+        formatter.applyPattern(pattern);
+        return formatter.format(new Date(input));
+    }
+
+
 
 }

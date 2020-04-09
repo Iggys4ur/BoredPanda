@@ -4,18 +4,30 @@ import java.util.*;
 
 class Action implements Runnable{
 
-    private int choice;
-    private long duration; // minutes
-    private String name;
+    private boredPanda PANDA;
+    private pandaJournal JOURNAL;
+    protected int choice;
+    protected long duration; // minutes
+    protected String name;
     private List<String> taskList = new ArrayList<String>();
     private Random R = new Random();
 
-    public Action(){choose(null);}
+    public Action(boredPanda panda)
+    {
+        this(panda, null);
+    }
+
+    public Action(boredPanda panda, Integer i)
+    {
+        PANDA = panda;
+        JOURNAL = panda.getJournal();
+        choose(i);
+    }
 
     @Override
     public void run(){
         try{
-            announce();
+
         } catch (Exception e){
             e.printStackTrace();
         }
@@ -26,7 +38,7 @@ class Action implements Runnable{
     }
 
     public Action choose (Integer c) {
-        this.applyChoice(c);
+        applyChoice(c);
         return this;
     }
 
@@ -107,39 +119,29 @@ class Action implements Runnable{
     }
 
     public void addDuration(long i){
-        this.duration += i;
+        duration += i;
     }
 
     public Action setDuration(Integer bound) {
 
         //can't do anything with a null duration, so replace it
         if (bound == null){ this.duration = ((R.nextInt(47) + 13) * (R.nextInt(R.nextInt(10)) + 2));}
-
         //bound of -1 gives duration 0 for initializer purposes
         else if (bound <= 0 || bound > 16) { this.duration = bound < 0 ? 0 : bound; }
-
         else{ this.duration = ((R.nextInt(47) + 13) * (R.nextInt(bound) + 2));}
 
         return this;
     }
 
     public Action setName(String n){
-        this.name = isNull(n) ? "Action Name": n;
+        name = isNull(n) ? "Action Name": n;
         return this;
     }
 
     public Action setTasks(List<String> l){
         List<String> defaults = Arrays.asList("BLANK", "BLANK", "BLANK");
-        this.taskList = isNull(l) ? new ArrayList<>(defaults) : l;
+        taskList = isNull(l) ? new ArrayList<>(defaults) : l;
         return this;
-    }
-
-    public int getChoice(){
-        return choice;
-    }
-
-    public long getDuration(){
-        return duration;
     }
 
     public boolean isNull(Object o){
@@ -147,7 +149,7 @@ class Action implements Runnable{
     }
 
     @Override public String toString(){
-        return "[" + name + "]" + " {" + duration + " minutes}" ;
+        return "[" + name + "]" + " {" + (duration) + " minutes}" ;
     }
 
 }
