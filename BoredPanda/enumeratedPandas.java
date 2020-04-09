@@ -2,21 +2,12 @@ package BoredPanda;
 
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileReader;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Stream;
 
 public class enumeratedPandas {
-
-    public enumeratedPandas(){
-        NAMES();
-    }
-
 
     public enum Activity{
         SLEEP,
@@ -32,23 +23,31 @@ public class enumeratedPandas {
         VILLAGER_EAT
     }
 
-    public enum Names{
-
-    }
-
     public enum Quality{
 
     }
 
-    public enum Luck {
+    public enum Size{
+
+    }
+    public enum Breed{
+
+    }
+    public enum Luck{
 
     }
 
-    public final List<String> NAMES()
+    public enum Fertility{
+
+    }
+
+    public final List<String> randomNames()
     {
+
+        URL url = getClass().getResource("names.txt");
         List<String> statement = new ArrayList<String>();
 
-        try(BufferedReader br = new BufferedReader(new FileReader("D:\\Users\\eswai\\Documents\\BoredPanda01a\\names.txt"))){
+        try(BufferedReader br = new BufferedReader(new FileReader(url.getPath()))){
             String sCurrentLine;
             while ((sCurrentLine = br.readLine()) != null){
                 statement.add(sCurrentLine);
