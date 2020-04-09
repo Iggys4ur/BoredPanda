@@ -1,6 +1,7 @@
 package BoredPanda;
 
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -81,14 +82,22 @@ public class timeClock {
         endOfDay = dayClock >= SHIFT_LENGTH;
     }
 
-    protected void print(){
+    public void print() {
         printHistory(weeks);
+        for (Action a : PANDA.getJournal().getJournal()){
+            System.out.println(a);
+        }
+        System.out.println("------------------------------------\n");
     }
 
     protected void printHistory(int week) {
-
         System.out.println("------------------------------------");
-        System.out.println("WEEK " + (week - 1) + " => " + week + " : [ HOURS: " + (history.get(week-1)[0]) + " | OT: " + (history.get(week-1)[1]) + " ]" );
+        System.out.println("WEEK " + (week - 1) + " => " + week + " : [HOURS] " + (history.get(week-1)[0]) + " [OT] " + (history.get(week-1)[1]) + " ]" );
+        System.out.println("------------------------------------");
+    }
+
+    public void printTotals(){
+        System.out.println("[TOTAL WEEKS] " + weeks + " : [ " + (totalClock) + " HOURS" + " / " + (totalOvertime) + " OT ]");
         System.out.println("------------------------------------");
         for (Action a : PANDA.getJournal().getJournal()){
             System.out.println(a);
@@ -104,7 +113,9 @@ public class timeClock {
         this.weekOvertime = 0;
     }
 
-    protected int age(){ return (int) (System.currentTimeMillis() - startTime ); }
+    protected int age(){
+        return (int) (System.currentTimeMillis() - startTime);
+    }
 
     protected String formatHours (long input){
         return formatWithPattern(input, "hh:mm");

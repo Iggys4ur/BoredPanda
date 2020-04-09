@@ -35,7 +35,6 @@ public class boredPanda {
             doPandaStuffForADay();
         }
         journal.compute();
-        journal.print();
     }
 
     protected void doPandaStuffForADay() {
@@ -51,5 +50,5 @@ public class boredPanda {
         return journal;
     }
 
-
+    public timeClock getClock() {return clock;}
 }

@@ -24,7 +24,7 @@ public class pandaJournal {
                 Magic = (byte) (new Random().nextInt(5 + (QUALITY/2)) + 1);
 
     //actions
-    Action[] journal = new Action[11];
+    protected Action[] journal = new Action[11];
     protected List<Action> activityHistory = new ArrayList<Action>();
 
     pandaJournal(boredPanda panda, String name){
@@ -35,7 +35,7 @@ public class pandaJournal {
 
     protected void initLogs()
     {
-        PANDA.previousAction = new Action(PANDA).setFields("INITIALIZATION ACTIVITY", null, 1000);
+        PANDA.previousAction = new Action(PANDA).setFields("INITIALIZATION ACTIVITY", null, 0);
         activityHistory.add(PANDA.previousAction);
         for (int i = 0; i < journal.length; i++) {
             journal[i] = new Action(PANDA, i).setDuration(0);
@@ -53,21 +53,17 @@ public class pandaJournal {
         }
     }
 
-    protected void print() {
+    public void print() {
+        //System.out.println("------------ [ JOURNAL ] ------------");
+        printStats();
+        PANDA.clock.print();
+    }
 
-        timeClock clock = PANDA.clock;
-
-        System.out.println("------------ [ JOURNAL ] ------------");
+    public void printStats(){
         System.out.println("NAME: " + NAME +" | AGE : " + PANDA.clock.age());
-        System.out.println("P: " + (int) Physique + " | A: " + (int) Agility + " | C: " + (int) Charisma + " | M: " + (int) Magic + " | I: " + (int) Intellect);
-        System.out.println("B:" + (int) BREED + " | Q: " + (int) QUALITY + " | S: " + (int) SIZE + " | F: " + FERTILITY + " | L: " + (int) LUCK);
+        System.out.println("[P] " + (int) Physique + " | [A] " + (int) Agility + " | [C] " + (int) Charisma + " | [M] " + (int) Magic + " | [I] " + (int) Intellect);
+        System.out.println("[B] " + (int) BREED + " | [Q] " + (int) QUALITY + " | [S] " + (int) SIZE + " | [F] " + FERTILITY + " | [L] " + (int) LUCK);
         System.out.println("------------------------------------");
-        System.out.println("TOTAL WEEKS " + clock.weeks + " [ TOTAL HOURS: " + (clock.totalClock) + " | TOTAL OT: " + (clock.totalOvertime) + " ]" );
-        System.out.println("------------------------------------");
-        for (Action a : journal){
-            System.out.println(a);
-        }
-        System.out.println("------------------------------------\n");
     }
 
     public byte[] getStats(){

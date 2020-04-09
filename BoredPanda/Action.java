@@ -27,7 +27,7 @@ class Action implements Runnable{
     @Override
     public void run(){
         try{
-
+            announce();
         } catch (Exception e){
             e.printStackTrace();
         }
