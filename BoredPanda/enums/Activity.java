@@ -1,0 +1,16 @@
+package BoredPanda.enums;
+
+public enum Activity{
+    INITIALIZATION_ACTIVITY,
+    SLEEP,
+    EAT_BAMBOO,
+    CLIMB_TREES,
+    SWIM,
+    PLAY_WITH_ROCKS,
+    FIGHT_BEES_FOR_HONEY,
+    DROOL_ON_THINGS,
+    TERRORIZE_VILLAGERS,
+    GROWL_AT_BIRDS,
+    SLASH_AT_TREES,
+    ABDUCT_AND_EAT_A_VILLAGER
+}
