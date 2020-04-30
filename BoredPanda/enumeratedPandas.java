@@ -29,6 +29,14 @@ public class enumeratedPandas {
         FEMALE
     }
 
+    public enum Stat{
+        PHYSIQUE,
+        AGILITY,
+        CONSTITUTION,
+        INTELLECT,
+        MAGIC
+    }
+
     public enum Quality{
 
 

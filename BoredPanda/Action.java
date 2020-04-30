@@ -5,7 +5,6 @@ import java.util.*;
 class Action implements Runnable{
 
     private BoredPanda PANDA;
-    private Journal JOURNAL;
     protected int choice;
     protected long duration; // minutes
     protected enumeratedPandas.Activity activity;
@@ -20,7 +19,6 @@ class Action implements Runnable{
     public Action(BoredPanda panda, Integer i)
     {
         PANDA = panda;
-        JOURNAL = panda.getJournal();
         choose(i);
     }
 
@@ -34,7 +32,7 @@ class Action implements Runnable{
     }
 
     public void announce(){
-        System.out.println(PANDA.NAME + " is going to " + name.toLowerCase() + " for the next " + duration + " minutes");
+        System.out.println(PANDA.NAME + " is going to " + name.toLowerCase() + " for the next " + duration + " minutes.");
     }
 
     public Action choose (Integer c) {
@@ -87,6 +85,7 @@ class Action implements Runnable{
             case 9:
                 setFields("Slash at Trees", R.nextInt(7) + 3);
                 break;
+
             case 10:
                 setFields("Abduct and Eat a Villager", R.nextInt(6) + 4);
                 break;

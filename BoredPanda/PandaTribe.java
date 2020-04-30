@@ -6,25 +6,47 @@ import java.util.Random;
 
 public class PandaTribe {
 
-    public short maxSize = 3;
-    public short Level = 1;
-    public long Experience = 0;
+    public short maxSize = 3,
+            Level = 1,
+            daysLeft = 0,
+            periodsLeft = 0;
+    public long Experience = 0,
+                Coins = 100;
     public String NAME;
-    public BoredPanda Chieftan;
-    public List<BoredPanda> tribe = new ArrayList<>(maxSize);
+    public BoredPanda Chieftain;
+    public final List<BoredPanda> TRIBE;
     public List<String> names = new enumeratedPandas().randomNames();
 
-    public PandaTribe(BoredPanda chief, String tribeName)
+    public PandaTribe(BoredPanda chief, String TRIBEName)
     {
-        Chieftan = chief;
-        NAME = tribeName;
+        newChieftain(chief);
+        NAME = TRIBEName;
+        TRIBE = new ArrayList<>(maxSize);
         for (int i = 0; i < maxSize; i++) {
-            if(i == 0) tribe.add(Chieftan);
-            else tribe.add(new BoredPanda(names.get(new Random().nextInt(names.size())), this));
+            if(i == 0) TRIBE.add(Chieftain);
+            else TRIBE.add(new BoredPanda(names.get(new Random().nextInt(names.size())), this));
         }
     }
 
-    public void addExperience(Integer exp){
+    //TODO +100 TRIBE XP every time a panda levels up
+
+    public void executeOrdersForPeriods(byte periods){
+        for (BoredPanda panda : TRIBE)
+        {
+            panda.doPandaStuffForPeriods(periods);
+        }
+    }
+    public void executeOrdersForAPeriod(){
+        for (BoredPanda panda : TRIBE)
+        {
+            panda.doPandaStuffForAPeriod();
+        }
+    }
+    public void executeOrdersForADay(){
+        for (BoredPanda panda : TRIBE) {panda.doPandaStuffForADay();}
+    }
+
+    public void addExperience(long exp){
         for (int i = 0; i < exp; i++) {
             Experience += 1;
             if(0.04 * Math.sqrt(Experience) % 1 == 0) LevelUp();
@@ -34,31 +56,63 @@ public class PandaTribe {
     public void LevelUp(){
         Level = (short) (0.04 * Math.sqrt(Experience));
         if (Level % 5 == 0){
-            List<BoredPanda> foo = new ArrayList<>(++maxSize);
-            foo.addAll(tribe);
-            tribe = foo;
+            maxSize++;
             recruitNewPanda();
         }
     }
 
-    public void challengeChieftan(BoredPanda challenger)
+    public void challengeChieftain(BoredPanda challenger)
     {
-        if(challenger.getJournal().SIZE > Chieftan.getJournal().SIZE){
-            newChieftan(challenger);
+        if(challenger.getJournal().SIZE > Chieftain.getJournal().SIZE){
+            newChieftain(challenger);
         }
         else banishPanda(challenger);
     }
 
-    public void newChieftan(BoredPanda challenger){
-        Chieftan = challenger;
+    public void newChieftain(BoredPanda challenger){
+        if(Chieftain == null)
+        {
+            Chieftain = challenger;
+        }
+        else
+        {
+            TRIBE.remove(Chieftain); // remove Chief from tribe
+            TRIBE.set(0, challenger); // add challenger back at chieftain (index = 0)
+            Chieftain = challenger; // make challenger Chieftain
+        }
+        challenger.isChief = true; // set Chieftain flag
+
     }
 
-    public void recruitNewPanda(){
-        if (tribe.size() < maxSize) tribe.add(new BoredPanda(names.get(new Random().nextInt(names.size())), this));
+    public BoredPanda recruitNewPanda(){
+        if (TRIBE.size() < maxSize)
+        {
+            BoredPanda panda = new BoredPanda(names.get(new Random().nextInt(names.size())), this);
+            TRIBE.add(panda);
+            return panda;
+        }
+        else return null;
     }
 
     public void banishPanda(BoredPanda toBanish) {
-        tribe.remove(toBanish);
+        TRIBE.remove(toBanish);
+    }
+
+    public void print()
+    {
+        Chieftain.getJournal().print();
+        for (BoredPanda panda : TRIBE)
+        {
+            if (!panda.equals(Chieftain)) panda.getJournal().print();
+        }
+    }
+    public void printStats()
+    {
+        Chieftain.getJournal().printStats();
+        for (BoredPanda panda : TRIBE)
+        {
+            if (!panda.equals(Chieftain)) panda.getJournal().printStats();
+        }
     }
 
 }

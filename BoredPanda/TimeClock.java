@@ -1,5 +1,6 @@
 package BoredPanda;
 
+
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -10,14 +11,14 @@ import java.util.concurrent.TimeUnit;
 
 public class TimeClock {
 
-    private static BoredPanda PANDA;
+    private final BoredPanda PANDA;
     private static ScheduledExecutorService SCHEDULER = Executors.newScheduledThreadPool(1);
     private SimpleDateFormat formatter = new SimpleDateFormat();
 
     //all the clocks
     private final long startTime = System.currentTimeMillis();
     protected final TimeUnit timeUnit = TimeUnit.SECONDS; //set TimeUnit for panda
-    protected final long SHIFT_LENGTH = 480; //set length of a shift / day
+    protected final long SHIFT_LENGTH = 8 * 60; //set length of a shift / day
     protected final int SHIFTS_PER_PERIOD = 5; //set number of shifts/days per period/week
     protected boolean endOfDay = false,
                         endOfPeriod = false;
@@ -33,8 +34,8 @@ public class TimeClock {
     protected List<long[]> history = new ArrayList<long[]>(1);
 
     public TimeClock(BoredPanda panda){
-        clearClocks();
         PANDA = panda;
+        clearClocks();
     }
     
     protected void punch()
@@ -53,10 +54,7 @@ public class TimeClock {
 
     protected void updateHistory(long[] newWeek)
     {
-        List<long[]> list = new ArrayList<long[]>(weeks++);
-        if(history != null) list.addAll(history);
-        list.add(newWeek);
-        history = list;
+        history.add(newWeek);
     }
 
     protected void endDay(){
@@ -71,6 +69,7 @@ public class TimeClock {
         updateHistory(new long[]{weekClock, weekOvertime});
         totalClock += weekClock;
         totalOvertime += weekOvertime;
+        weeks++;
         clearClocks();
     }
 
@@ -81,7 +80,7 @@ public class TimeClock {
 
     public void print() {
         printHistory(weeks);
-        for (Action a : PANDA.getJournal().getJournal()){
+        for (Action a : PANDA.getJournal().JOURNAL){
             System.out.println(a);
         }
         System.out.println("------------------------------------\n");
@@ -89,14 +88,14 @@ public class TimeClock {
 
     protected void printHistory(int week) {
         System.out.println("------------------------------------");
-        System.out.println("WEEK " + (week - 1) + " => " + week + " : [HOURS] " + (history.get(week-1)[0]) + " [OT] " + (history.get(week-1)[1]) + " ]" );
+        System.out.println("WEEK " + (week - 1) + " => " + week + " : [HOURS] " + (history.get(week-1)[0])/60 + " [OT] " + (history.get(week-1)[1])/60 + " ]" );
         System.out.println("------------------------------------");
     }
 
     public void printTotals(){
-        System.out.println("[TOTAL WEEKS] " + weeks + " : [ " + (totalClock) + " HOURS" + " / " + (totalOvertime) + " OT ]");
+        System.out.println("[TOTAL WEEKS] " + weeks + " : [ " + (totalClock)/60 + " HOURS" + " / " + (totalOvertime)/60 + " OT ]");
         System.out.println("------------------------------------");
-        for (Action a : PANDA.getJournal().getJournal()){
+        for (Action a : PANDA.getJournal().JOURNAL){
             System.out.println(a);
         }
         System.out.println("------------------------------------\n");
