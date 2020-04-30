@@ -1,5 +1,7 @@
 package BoredPanda;
 
+import BoredPanda.enums.Activity;
+
 import java.util.*;
 
 class Action implements Runnable{
@@ -7,8 +9,7 @@ class Action implements Runnable{
     private BoredPanda PANDA;
     protected int choice;
     protected long duration; // minutes
-    protected enumeratedPandas.Activity activity;
-    protected String name;
+    protected Activity activity;
     private Random R = new Random();
 
     public Action(BoredPanda panda)
@@ -26,13 +27,14 @@ class Action implements Runnable{
     public void run(){
         try{
             announce();
+            //PANDA.Clock.SCHEDULER.awaitTermination(duration, PANDA.Clock.timeUnit);
         } catch (Exception e){
             e.printStackTrace();
         }
     }
 
     public void announce(){
-        System.out.println(PANDA.NAME + " is going to " + name.toLowerCase() + " for the next " + duration + " minutes.");
+        System.out.println(PANDA.NAME + " is going to " + activity.name() + " for the next " + duration + " minutes. SYSTEM TIME: " + System.currentTimeMillis());
     }
 
     public Action choose (Integer c) {
@@ -47,54 +49,53 @@ class Action implements Runnable{
         switch (choice) {
 
             case 0:
-                setFields("Sleep", R.nextInt(8) + 8);
+                setFields(Activity.SLEEP, R.nextInt(8) + 8);
                 break;
 
             case 1:
-                setFields("Eat Bamboo", R.nextInt(5) + 5);
+                setFields(Activity.EAT_BAMBOO, R.nextInt(5) + 5);
                 break;
 
             case 2:
-                setFields("Climb Trees", R.nextInt(7) + 3);
+                setFields(Activity.CLIMB_TREES, R.nextInt(7) + 3);
                 break;
 
             case 3:
-                setFields("Swim", R.nextInt(7) + 3);
+                setFields(Activity.SWIM, R.nextInt(7) + 3);
                 break;
 
             case 4:
-                setFields("Play with Rocks", R.nextInt(9) + 1);
+                setFields(Activity.PLAY_WITH_ROCKS, R.nextInt(9) + 1);
                 break;
 
             case 5:
-                setFields("Fight bees for honey", R.nextInt(6) + 4);
+                setFields(Activity.FIGHT_BEES_FOR_HONEY, R.nextInt(6) + 4);
                 break;
 
             case 6:
-                setFields("Drool on Things", R.nextInt(9) + 1);
+                setFields(Activity.DROOL_ON_THINGS, R.nextInt(9) + 1);
                 break;
 
             case 7:
-                setFields("Terrorize Villagers",R.nextInt(6) + 4);
+                setFields(Activity.TERRORIZE_VILLAGERS,R.nextInt(6) + 4);
                 break;
 
             case 8:
-                setFields("Growl at Birds", R.nextInt(9) + 1);
+                setFields(Activity.GROWL_AT_BIRDS, R.nextInt(9) + 1);
                 break;
 
             case 9:
-                setFields("Slash at Trees", R.nextInt(7) + 3);
+                setFields(Activity.SLASH_AT_TREES, R.nextInt(7) + 3);
                 break;
 
             case 10:
-                setFields("Abduct and Eat a Villager", R.nextInt(6) + 4);
+                setFields(Activity.ABDUCT_AND_EAT_A_VILLAGER, R.nextInt(6) + 4);
                 break;
         }
     }
 
-    public Action setFields(String n, int b){
-        name = n;
-        activity = enumeratedPandas.Activity.valueOf(n.replace(' ', '_').toUpperCase());
+    public Action setFields(Activity a, int b){
+        activity = a;
         setDuration(b);
         return this;
     }
@@ -109,8 +110,8 @@ class Action implements Runnable{
         return this;
     }
 
-    @Override public String toString(){
-        return "[" + name + "]" + " {" + (duration) + " minutes}" ;
+    @Override
+    public String toString(){
+        return activity.name() + " [" + duration + "]";
     }
-
 }
