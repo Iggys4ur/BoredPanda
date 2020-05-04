@@ -3,7 +3,6 @@ package BoredPanda;
 
 import BoredPanda.enums.Activity;
 import BoredPanda.enums.Stat;
-
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -17,7 +16,7 @@ public class TimeClock {
     private final BoredPanda PANDA;
     private final long startTime = System.currentTimeMillis();
     private final TimeUnit timeUnit = TimeUnit.SECONDS; //set TimeUnit for panda
-    private final long SHIFT_LENGTH = 8 * 60; //set length of a shift / day
+    final long SHIFT_LENGTH = 8 * 60; //set length of a shift / day
     final byte SHIFTS_PER_PERIOD = 5; //set number of shifts/days per period/period
     private final ScheduledExecutorService SCHEDULER = Executors.newScheduledThreadPool(1);
     private SimpleDateFormat formatter = new SimpleDateFormat();
@@ -28,17 +27,17 @@ public class TimeClock {
     private final ConcurrentHashMap<Activity, Long> TOTAL;
 
     byte days = 0;
-    long dayClock = 0,
+    private long dayClock = 0,
             totalClock = 0,
             totalOT = 0;
-    boolean endOfShift = false,
+    private boolean endOfShift = false,
             endOfPeriod = false;
 
 
     public TimeClock(BoredPanda panda) {
         PANDA = panda;
         SHIFT = new ConcurrentHashMap<Activity, Action>(Activity.values().length); // 11k activity types / 11 v actions
-        PERIOD = new ConcurrentHashMap<Byte, ConcurrentHashMap<Activity, Action>>(SHIFTS_PER_PERIOD); // k shifts per period / 7 v SHIFT maps
+        PERIOD = new ConcurrentHashMap<Byte, ConcurrentHashMap<Activity, Action>>(SHIFTS_PER_PERIOD); // X k shifts per period / X v SHIFT maps
         HISTORY = new ConcurrentHashMap<Long, ConcurrentHashMap<Byte, ConcurrentHashMap<Activity, Action>>>(); // X k long / X v PERIOD maps
         TOTAL = new ConcurrentHashMap<Activity, Long>(Activity.values().length); // 11k activity types / 11 v long
         initLogs();
@@ -65,7 +64,7 @@ public class TimeClock {
         PANDA.nextAction();
     }
 
-    void endActivity()
+    private void endActivity()
     {
         Action currentAction = PANDA.currentAction,
                 totalAction = SHIFT.get(currentAction.activity);
@@ -76,32 +75,29 @@ public class TimeClock {
         updateTotalClock();
     }
 
-    void endShift() {
+    private void endShift() {
         this.endOfPeriod = ++days == SHIFTS_PER_PERIOD;
         PERIOD.put(days, SHIFT);
         clearSHIFT();
-        PANDA.Tribe.shiftsLeft -= 1;
+        if(PANDA.isChief) PANDA.Tribe.decrementShiftsLeft();
     }
 
-    void endPeriod()
+    private void endPeriod()
     {
         HISTORY.put(periods(), PERIOD);
         compute();
         clearPERIOD();
-        PANDA.Tribe.periodsLeft -= 1;
+        if(PANDA.isChief) PANDA.Tribe.decrementPeriodsLeft();
     }
 
-    void clearPERIOD(){
+    private void clearPERIOD(){
         this.days = 0;
         PERIOD.clear();
-        for (byte shift = 0; shift < SHIFTS_PER_PERIOD; shift++)
-        {
-            clearSHIFT();
-            PERIOD.put(shift, SHIFT);
-        }
+        clearSHIFT();
+        PERIOD.put((byte) 0, SHIFT);
     }
 
-    void clearSHIFT() {
+    private void clearSHIFT() {
         this.dayClock = 0;
         SHIFT.clear();
         for (Activity activity : Activity.values())
@@ -123,58 +119,105 @@ public class TimeClock {
         TOTAL.put(toUpdate.activity, currentTotal);
     }
 
-    private long[] clockFromShift(long period, byte shift)
+    private ConcurrentHashMap<Activity, Action> actionsFromShift(Long period, Byte shift)
+    {
+        if(period.equals(periods()))return SHIFT;
+        else return HISTORY.get(period).get(shift);
+    }
+
+    private ConcurrentHashMap<Activity, Action> actionsFromPeriod(Long period) {
+
+        byte shiftsInPeriod = period.equals(periods()) ? (byte) PERIOD.size() : (byte) HISTORY.get(period).size();
+
+        ConcurrentHashMap<Activity, Action> periodTotals = new ConcurrentHashMap<Activity, Action>();
+            for (Activity activity : Activity.values()){periodTotals.put(activity, new Action(PANDA, activity,0L));}
+
+        List<Action> actions = new ArrayList<Action>();
+            for (byte shift = 0; shift < shiftsInPeriod; shift++){actions.addAll(actionsFromShift(period, shift).values());}
+
+        for (Action action : actions)
+        {
+            Activity activity = action.activity;
+            long duration = action.duration + periodTotals.get(activity).duration;
+            Action total = new Action(PANDA, activity, duration);
+            periodTotals.put(activity, total);
+        }
+        return periodTotals;
+    }
+
+    private long[] totalClockFromShift(Long period, Byte shift)
     {
         long shiftClock = 0,
                 shiftOT = 0;
 
-        ArrayList<Action> readShift = new ArrayList<Action>(HISTORY.get(period).get(shift).values());
+        ArrayList<Action> readShift = period.equals(periods()) ? new ArrayList<>(SHIFT.values()) :  new ArrayList<>(HISTORY.get(period).get(shift).values()); // if asking for clock from current period, iterate for shifts in current period
         for (Action action : readShift)
         {
             shiftClock += action.duration;
-            long ot = shiftClock - SHIFT_LENGTH;
-            shiftOT += ot < 0 ? 0 : ot;
+            shiftOT += (shiftClock - SHIFT_LENGTH) < 0 ? 0 : (shiftClock - SHIFT_LENGTH);
         }
         return new long[]{shiftClock, shiftOT};
     }
 
-    private long[] clockFromPeriod(long period)
+    private long[] totalClockFromPeriod(Long period)
     {
         long periodClock = 0,
                 periodOT = 0;
-
-        for(byte shift = 0; shift < HISTORY.get(period).size(); shift++)
+        byte shiftsInPeriod = period.equals(periods()) ? shifts() : (byte) HISTORY.get(period).size(); // if asking for clock from current period, iterate for number of shifts in current period
+        for(byte shift = 0; shift < shiftsInPeriod; shift++)
         {
-            periodClock += clockFromShift(period, shift)[0];
-            periodOT += clockFromShift(period, shift)[1];
+            periodClock += totalClockFromShift(period, shift)[0];
+            periodOT += totalClockFromShift(period, shift)[1];
         }
         return new long[]{periodClock, periodOT};
     }
 
-    public void print() {printHistory(periods());}
+    void printShiftFromHistory(Long period, Byte shift)
+    {
+        ArrayList<Action> actions = new ArrayList<Action>(actionsFromShift(period, shift).values());
+        System.out.println("SHIFT: " + shift);
+        System.out.println("------------------------------------");
+        for (Action action : actions){System.out.println(action);}
+        System.out.println("------------------------------------");
+    }
 
-    void printHistory(long period) {
+    void printPeriodFromHistory(Long period) {
+        ArrayList<Action> actions = new ArrayList<Action>(actionsFromPeriod(period).values());
+        System.out.println("\n\n------------------------------------");
+        System.out.println(PANDA);
         System.out.println("------------------------------------");
-        System.out.println("PERIOD " + (period - 1) + " => " + period + " : [HOURS] " + periodClock(period) + " [OT] " + periodOT(period) + " ]" );
+        System.out.println("PERIOD " + (period - 1) + " -> " + (period) + " : [HOURS] " + periodClock(period) + " [OT] " + periodOT(period) + " ]" );
         System.out.println("------------------------------------");
+        for (Action action : actions){System.out.println(action);}
+        System.out.println("------------------------------------");
+
     }
 
     public void printTotals(){
 
         System.out.println("[TOTAL PERIODS] " + periods() + " : [ " + totalClock/60 + " HOURS" + " / " + totalOT/60 + " OT ]");
         System.out.println("------------------------------------");
-        for (Activity activity : Activity.values())
-        {
-            System.out.println(activity.name() + " " + TOTAL.get(activity)/60 + " hours");
-        }
+        for (Activity activity : Activity.values()){System.out.println(activity.name() + " " + TOTAL.get(activity)/60 + " hours");}
         System.out.println("------------------------------------\n");
     }
 
-    long periods(){return HISTORY.size();}
+    boolean isEndOfShift()
+    {
+        return endOfShift;
+    }
 
-    long periodClock(long period){return clockFromPeriod(period)[0];}
+    boolean isEndOfPeriod()
+    {
+        return endOfPeriod;
+    }
 
-    long periodOT(long period){return clockFromPeriod(period)[1];}
+    Byte shifts(){return (byte) PERIOD.size();}
+
+    Long periods(){return (long) HISTORY.size();}
+
+    long periodClock(long period){return totalClockFromPeriod(period)[0];}
+
+    long periodOT(long period){return totalClockFromPeriod(period)[1];}
 
     long age(){return System.currentTimeMillis() - startTime;}
 
@@ -194,35 +237,35 @@ public class TimeClock {
                 }
                 case EAT_BAMBOO: {
                     //constitution
-                    PANDA.getJournal().addExpAndLevel(exp, Stat.CONSTITUTION);
+                    PANDA.addExperience(exp, Stat.CONSTITUTION);
                     break;
                 }
                 case CLIMB_TREES: {
                     //1/2 agil + 1/2 physique
-                    PANDA.getJournal().addExpAndLevel(exp / 2, Stat.AGILITY);
-                    PANDA.getJournal().addExpAndLevel(exp / 2, Stat.PHYSIQUE);
+                    PANDA.addExperience(exp / 2, Stat.AGILITY);
+                    PANDA.addExperience(exp / 2, Stat.PHYSIQUE);
                     break;
                 }
 
                 case SWIM: {
                     // 1/2 constitution | 1/4 physique | 1/4 agility
-                    PANDA.getJournal().addExpAndLevel(exp / 2, Stat.CONSTITUTION);
-                    PANDA.getJournal().addExpAndLevel(exp / 4, Stat.AGILITY);
-                    PANDA.getJournal().addExpAndLevel(exp / 4, Stat.PHYSIQUE);
+                    PANDA.addExperience(exp / 2, Stat.CONSTITUTION);
+                    PANDA.addExperience(exp / 4, Stat.AGILITY);
+                    PANDA.addExperience(exp / 4, Stat.PHYSIQUE);
                     break;
                 }
 
                 case PLAY_WITH_ROCKS: {
                     // 1/2 physique | 1/2 constitution
-                    PANDA.getJournal().addExpAndLevel(exp / 2, Stat.PHYSIQUE);
-                    PANDA.getJournal().addExpAndLevel(exp / 2, Stat.CONSTITUTION);
+                    PANDA.addExperience(exp / 2, Stat.PHYSIQUE);
+                    PANDA.addExperience(exp / 2, Stat.CONSTITUTION);
                     break;
                 }
 
                 case FIGHT_BEES_FOR_HONEY: {
                     // 1/2 Intellect | 1/2 Agility
-                    PANDA.getJournal().addExpAndLevel(exp / 2, Stat.AGILITY);
-                    PANDA.getJournal().addExpAndLevel(exp / 2, Stat.PHYSIQUE);
+                    PANDA.addExperience(exp / 2, Stat.AGILITY);
+                    PANDA.addExperience(exp / 2, Stat.PHYSIQUE);
                     break;
                 }
 
@@ -234,25 +277,25 @@ public class TimeClock {
 
                 case TERRORIZE_VILLAGERS: {
                     // 3/4 intelligence | 1/4 magic
-                    PANDA.getJournal().addExpAndLevel((long) (3 * exp / 4), Stat.INTELLECT);
-                    PANDA.getJournal().addExpAndLevel(exp, Stat.MAGIC);
+                    PANDA.addExperience((3 * exp / 4), Stat.INTELLECT);
+                    PANDA.addExperience(exp, Stat.MAGIC);
                     break;
                 }
 
                 case GROWL_AT_BIRDS: {
                     //intellect
-                    PANDA.getJournal().addExpAndLevel(exp, Stat.INTELLECT);
+                    PANDA.addExperience(exp, Stat.INTELLECT);
                     break;
                 }
                 case SLASH_AT_TREES: {
                     // physique
-                    PANDA.getJournal().addExpAndLevel(exp, Stat.PHYSIQUE);
+                    PANDA.addExperience(exp, Stat.PHYSIQUE);
                     break;
                 }
                 case ABDUCT_AND_EAT_A_VILLAGER: {
                     // 1/2 magic | 1/2 intellect
-                    PANDA.getJournal().addExpAndLevel(exp / 2, Stat.INTELLECT);
-                    PANDA.getJournal().addExpAndLevel(exp / 2, Stat.MAGIC);
+                    PANDA.addExperience(exp / 2, Stat.INTELLECT);
+                    PANDA.addExperience(exp / 2, Stat.MAGIC);
                     break;
                 }
             }

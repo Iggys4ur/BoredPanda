@@ -1,6 +1,6 @@
 package BoredPanda.enums;
 
-public enum Stat{
+public enum Stat {
     PHYSIQUE,
     AGILITY,
     CONSTITUTION,
