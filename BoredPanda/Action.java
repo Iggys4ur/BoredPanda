@@ -7,26 +7,37 @@ import java.util.*;
 class Action implements Runnable{
 
     private BoredPanda PANDA;
-    protected int choice;
-    protected long duration; // minutes
-    protected Activity activity;
-    private Random R = new Random();
+    long duration; // minutes
+    Activity activity;
+    private final Random R = new Random();
+
+
+    public Action(BoredPanda panda, Activity activity)
+    {
+        PANDA = panda;
+        choose(activity);
+    }
+
+    public Action(BoredPanda panda, Activity activity, Long duration)
+    {
+        this(panda, activity);
+        setDuration(duration);
+    }
 
     public Action(BoredPanda panda)
     {
-        this(panda, null);
+        this(panda, null, null);
     }
 
-    public Action(BoredPanda panda, Integer i)
+    public Action(BoredPanda panda, Long duration)
     {
-        PANDA = panda;
-        choose(i);
+        this(panda, null, duration);
     }
 
     @Override
     public void run(){
         try{
-            announce();
+            //announce();
             //PANDA.Clock.SCHEDULER.awaitTermination(duration, PANDA.Clock.timeUnit);
         } catch (Exception e){
             e.printStackTrace();
@@ -34,80 +45,58 @@ class Action implements Runnable{
     }
 
     public void announce(){
-        System.out.println(PANDA.NAME + " is going to " + activity.name() + " for the next " + duration + " minutes. SYSTEM TIME: " + System.currentTimeMillis());
+        System.out.println(PANDA + " is going to " + activity + " for the next " + duration + " minutes. SYSTEM TIME: " + System.currentTimeMillis());
     }
 
-    public Action choose (Integer c) {
-        applyChoice(c);
+    public Action choose(Activity a){
+        setActivity(a);
+        setDuration(null);
         return this;
     }
 
-    public void applyChoice(Integer c){
+    void setActivity(Activity a) {
+        this.activity = a == null ? randomActivity() : a;
+    }
 
-        choice = (c == null || c < 0 || 10 < c) ? R.nextInt(11) : c;
-
-        switch (choice) {
-
-            case 0:
-                setFields(Activity.SLEEP, R.nextInt(8) + 8);
-                break;
-
-            case 1:
-                setFields(Activity.EAT_BAMBOO, R.nextInt(5) + 5);
-                break;
-
-            case 2:
-                setFields(Activity.CLIMB_TREES, R.nextInt(7) + 3);
-                break;
-
-            case 3:
-                setFields(Activity.SWIM, R.nextInt(7) + 3);
-                break;
-
-            case 4:
-                setFields(Activity.PLAY_WITH_ROCKS, R.nextInt(9) + 1);
-                break;
-
-            case 5:
-                setFields(Activity.FIGHT_BEES_FOR_HONEY, R.nextInt(6) + 4);
-                break;
-
-            case 6:
-                setFields(Activity.DROOL_ON_THINGS, R.nextInt(9) + 1);
-                break;
-
-            case 7:
-                setFields(Activity.TERRORIZE_VILLAGERS,R.nextInt(6) + 4);
-                break;
-
-            case 8:
-                setFields(Activity.GROWL_AT_BIRDS, R.nextInt(9) + 1);
-                break;
-
-            case 9:
-                setFields(Activity.SLASH_AT_TREES, R.nextInt(7) + 3);
-                break;
-
-            case 10:
-                setFields(Activity.ABDUCT_AND_EAT_A_VILLAGER, R.nextInt(6) + 4);
-                break;
+    private Activity randomActivity()
+    {
+        Activity statement = Activity.SLEEP;
+        byte b = (byte) (R.nextInt(Activity.values().length) + 1),
+                i = 0;
+        for (Activity activity : Activity.values())
+        {
+            if(++i == b) statement = activity;
         }
+        return statement;
     }
 
-    public Action setFields(Activity a, int b){
-        activity = a;
-        setDuration(b);
-        return this;
+    private long generateDuration()
+    {
+        long bound;
+        switch (activity)
+        {
+            case SLEEP: bound =  R.nextInt(11) + 8;break;
+            case EAT_BAMBOO: bound =  R.nextInt(5) + 5;break;
+            case CLIMB_TREES: bound =  R.nextInt(7) + 3;break;
+            case SWIM: bound =  R.nextInt(7) + 3;break;
+            case PLAY_WITH_ROCKS: bound =  R.nextInt(9) + 1;break;
+            case FIGHT_BEES_FOR_HONEY: bound =  R.nextInt(6) + 4;break;
+            case DROOL_ON_THINGS: bound =  R.nextInt(3) + 1;break;
+            case TERRORIZE_VILLAGERS: bound =  R.nextInt(6) + 4;break;
+            case GROWL_AT_BIRDS: bound =  R.nextInt(9) + 1;break;
+            case SLASH_AT_TREES: bound =  R.nextInt(7) + 3;break;
+            case ABDUCT_AND_EAT_A_VILLAGER: bound =  R.nextInt(6) + 4; break;
+            default: bound = R.nextInt(10)+1;
+        }
+        return ((R.nextInt(47) + 13) * (R.nextInt((int) bound) + 2));
     }
 
-    public Action setDuration(Integer bound) {
-        //can't do anything with a null duration, so replace it
-        if (bound == null){ this.duration = ((R.nextInt(47) + 13) * (R.nextInt(R.nextInt(10)) + 2));}
-        //out of bounds gives duration 0 for (bound = -1) initializer purposes
-        else if (bound <= 0 || bound > 16) { this.duration = bound < 0 ? 0 : bound; }
-        //else in all valid cases (1 - 16) put it through
-        else{ this.duration = ((R.nextInt(47) + 13) * (R.nextInt(bound) + 2));}
-        return this;
+    void setDuration(Long d) {
+        this.duration = d == null ? generateDuration() : d;
+    }
+
+    public long getDuration() {
+        return duration;
     }
 
     @Override

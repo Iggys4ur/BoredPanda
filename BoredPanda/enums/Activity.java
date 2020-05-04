@@ -1,7 +1,6 @@
 package BoredPanda.enums;
 
 public enum Activity{
-    INITIALIZATION_ACTIVITY,
     SLEEP,
     EAT_BAMBOO,
     CLIMB_TREES,

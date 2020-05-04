@@ -1,6 +1,7 @@
 package BoredPanda;
 
 import BoredPanda.enums.Sex;
+import BoredPanda.util.RandomNames;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -10,10 +11,10 @@ public class PandaTribe {
 
     public short Level = 1,
                 maxSize = 5,
-                daysLeft = 0,
+                shiftsLeft = 0,
                 periodsLeft = 0;
     public long Experience = 0,
-                Coins = 100;
+                Coins = 100; //TODO
     public String NAME;
     public BoredPanda Chieftain;
     public final List<String> names = new RandomNames().randomNames;
@@ -37,16 +38,14 @@ public class PandaTribe {
 
     public void executeOrdersForPeriods(short periods){
         periodsLeft = periods;
-        daysLeft = (short) (periodsLeft * Chieftain.Clock.SHIFTS_PER_PERIOD);
-        ArrayList<BoredPanda> t = new ArrayList<BoredPanda>(TRIBE.values());
-        byte count = 0;
-        for (BoredPanda panda : t)
+        shiftsLeft = (short) (periodsLeft * Chieftain.CLOCK.SHIFTS_PER_PERIOD);
+        ArrayList<BoredPanda> tribe = new ArrayList<BoredPanda>(TRIBE.values());
+        for (int panda = 0; panda < tribe.size(); panda++)
         {
-            if(count < 5) panda.doPandaStuffForPeriods(periods);
-            else panda.doPandaStuffForPeriods(periodsLeft);
-            count++;
+            TRIBE.get(panda).doPandaStuffForPeriods(periods);
         }
     }
+
     public void executeOrdersForADay(){
         for (int i = 0; i < maxSize; i++) {
             BoredPanda panda = TRIBE.get(i);
@@ -67,7 +66,7 @@ public class PandaTribe {
         {
             maxSize++;
             breedPandas();
-            TRIBE.get(size() - 1).doPandaStuffForDays(daysLeft);
+            TRIBE.get(size() - 1).doPandaStuffForDays(shiftsLeft);
         }
         else if(Level > 10 && Level < 25)
         {
@@ -75,7 +74,7 @@ public class PandaTribe {
             {
                 maxSize++;
                 breedPandas();
-                TRIBE.get(size() - 1).doPandaStuffForDays(daysLeft);
+                TRIBE.get(size() - 1).doPandaStuffForDays(shiftsLeft);
             }
         }
         else
@@ -84,7 +83,7 @@ public class PandaTribe {
             {
                 maxSize++;
                 breedPandas();
-                TRIBE.get(size() - 1).doPandaStuffForDays(daysLeft);
+                TRIBE.get(size() - 1).doPandaStuffForDays(shiftsLeft);
             }
         }
     }
@@ -125,11 +124,11 @@ public class PandaTribe {
 
     public void print()
     {
-        System.out.println();
         for (int i = 0; i < TRIBE.size(); i++)
         {
-            TRIBE.get(i).getJournal().print();
+            TRIBE.get(i).print();
         }
+
     }
 
     public void printStats()

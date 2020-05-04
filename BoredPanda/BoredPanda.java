@@ -1,9 +1,11 @@
 package BoredPanda;
 
+import BoredPanda.enums.Activity;
+
 public class BoredPanda {
 
     private final Journal JOURNAL;
-    protected TimeClock Clock;
+    protected final TimeClock CLOCK;
     protected Action currentAction, previousAction;
     public PandaTribe Tribe;
     public final BoredPanda MOTHER, FATHER;
@@ -20,37 +22,37 @@ public class BoredPanda {
         FATHER = father;
         Tribe = tribe;
         JOURNAL = new Journal(this);
-        Clock = new TimeClock(this);
-
+        CLOCK = new TimeClock(this);
+        currentAction = new Action(this, 0L);
+        previousAction = new Action(this, Activity.SLEEP, 480L);
     }
 
     protected void nextAction() {
         previousAction = currentAction;
-        JOURNAL.ACTIVITY_HISTORY.put(previousAction.activity, previousAction);
         currentAction = new Action(this);
     }
 
-    protected void doPandaStuffForPeriods(int periods) {
+    public void doPandaStuffForPeriods(int periods) {
         for (int i = 0; i < periods; i++) {
             doPandaStuffForAPeriod();
         }
     }
 
     protected void doPandaStuffForAPeriod() {
-        doPandaStuffForDays(Clock.SHIFTS_PER_PERIOD);
+        doPandaStuffForDays(CLOCK.SHIFTS_PER_PERIOD);
     }
 
-    protected void doPandaStuffForDays(int days) {
-        for (int i = 0; i < days; i++) {
-
+    protected void doPandaStuffForDays(int days)
+    {
+        for (int i = 0; i < days; i++)
+        {
             doPandaStuffForADay();
         }
-        JOURNAL.compute();
     }
 
     protected void doPandaStuffForADay() {
-        Clock.punch();
-        if (!Clock.endOfDay) doPandaStuffForADay();
+        CLOCK.punch();
+        if (!CLOCK.endOfShift) doPandaStuffForADay();
     }
 
     public Journal getJournal() {
@@ -62,5 +64,16 @@ public class BoredPanda {
     }
 
     public boolean hasParents() {return MOTHER != null && FATHER != null;}
+
+    public void print()
+    {
+        JOURNAL.printStats();
+        CLOCK.printTotals();
+    }
+
+    @Override
+    public String toString(){
+        return NAME;
+    }
 
 }
