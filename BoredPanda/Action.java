@@ -1,35 +1,36 @@
 package BoredPanda;
 
 import BoredPanda.enums.Activity;
-
 import java.util.*;
 
 class Action implements Runnable{
 
     private BoredPanda PANDA;
+    private TimeClock CLOCK;
     long duration; // minutes
     Activity activity;
     private final Random R = new Random();
 
 
-    public Action(BoredPanda panda, Activity activity)
+    private Action(BoredPanda panda, Activity activity)
     {
         PANDA = panda;
+        CLOCK = PANDA.CLOCK;
         choose(activity);
     }
 
-    public Action(BoredPanda panda, Activity activity, Long duration)
+    Action(BoredPanda panda, Activity activity, Long duration)
     {
         this(panda, activity);
         setDuration(duration);
     }
 
-    public Action(BoredPanda panda)
+    Action(BoredPanda panda)
     {
         this(panda, null, null);
     }
 
-    public Action(BoredPanda panda, Long duration)
+    Action(BoredPanda panda, Long duration)
     {
         this(panda, null, duration);
     }
@@ -37,21 +38,15 @@ class Action implements Runnable{
     @Override
     public void run(){
         try{
-            //announce();
-            //PANDA.Clock.SCHEDULER.awaitTermination(duration, PANDA.Clock.timeUnit);
+            CLOCK.SCHEDULER.awaitTermination(duration, CLOCK.timeUnit);
         } catch (Exception e){
             e.printStackTrace();
         }
     }
 
-    public void announce(){
-        System.out.println(PANDA + " is going to " + activity + " for the next " + duration + " minutes. SYSTEM TIME: " + System.currentTimeMillis());
-    }
-
-    public Action choose(Activity a){
+    private void choose(Activity a){
         setActivity(a);
         setDuration(null);
-        return this;
     }
 
     void setActivity(Activity a) {

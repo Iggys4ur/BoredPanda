@@ -1,6 +1,5 @@
 package BoredPanda;
 
-
 import BoredPanda.enums.Activity;
 import BoredPanda.enums.Stat;
 import java.text.SimpleDateFormat;
@@ -15,10 +14,10 @@ public class TimeClock {
     //attributes
     private final BoredPanda PANDA;
     private final long startTime = System.currentTimeMillis();
-    private final TimeUnit timeUnit = TimeUnit.SECONDS; //set TimeUnit for panda
+    final TimeUnit timeUnit = TimeUnit.MICROSECONDS; //set TimeUnit for panda
     final long SHIFT_LENGTH = 8 * 60; //set length of a shift / day
     final byte SHIFTS_PER_PERIOD = 5; //set number of shifts/days per period/period
-    private final ScheduledExecutorService SCHEDULER = Executors.newScheduledThreadPool(1);
+    final ScheduledExecutorService SCHEDULER = Executors.newScheduledThreadPool(1);
     private SimpleDateFormat formatter = new SimpleDateFormat();
 
     private final ConcurrentHashMap<Activity, Action> SHIFT;
@@ -52,9 +51,9 @@ public class TimeClock {
     }
 
     void punch() {
-        //SCHEDULER.execute(PANDA.currentAction);
+        SCHEDULER.execute(PANDA.currentAction);
         endActivity();
-        SCHEDULER.schedule(PANDA.currentAction, PANDA.previousAction.duration, timeUnit);
+        //SCHEDULER.schedule(PANDA.currentAction, PANDA.previousAction.duration, timeUnit);
         if (endOfShift) {
             endShift();
             if (endOfPeriod) {

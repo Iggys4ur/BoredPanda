@@ -2,8 +2,8 @@ package BoredPanda;
 
 import BoredPanda.enums.Activity;
 import BoredPanda.enums.Role;
+import BoredPanda.enums.Sex;
 import BoredPanda.enums.Stat;
-
 import java.util.concurrent.ConcurrentHashMap;
 
 public class BoredPanda {
@@ -126,16 +126,38 @@ public class BoredPanda {
 
     public void print()
     {
-        System.out.println("------------------------------------");
+        System.out.println("\n\n------------------------------------");
         System.out.println(this);
-        JOURNAL.printAttributes();
         JOURNAL.printStats();
         CLOCK.printTotals();
+    }
+    private String lineage()
+    {
+        StringBuilder sb = new StringBuilder();
+        if(hasParents())
+        {
+            if(JOURNAL.SEX.equals(Sex.MALE)) sb.append(", son of ");
+            else if(JOURNAL.SEX.equals(Sex.FEMALE)) sb.append(", daughter of ");
+            sb.append(father());
+            sb.append(" and ");
+            sb.append(mother());
+        }
+        return sb.toString();
+    }
+
+    private String mother()
+    {
+        return MOTHER.NAME;
+    }
+
+    private String father()
+    {
+        return FATHER.NAME;
     }
     
     @Override
     public String toString(){
-        return TribeRole.name() + " | " + NAME + " (" + JOURNAL.SEX.toString().charAt(0) + ") | Lv. " + JOURNAL.Tier;
+        return TribeRole.name() + " | " + NAME + lineage() + " (" + JOURNAL.SEX.toString().charAt(0) + ") | Lv. " + JOURNAL.Tier;
     }
 
 }
